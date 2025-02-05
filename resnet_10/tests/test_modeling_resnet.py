@@ -94,3 +94,9 @@ def test_different_input_sizes(model, input_size):
     output = model(x)
     expected_size = input_size // 32  # Due to 5 downsampling operations
     assert output.last_hidden_state.shape[-1] == expected_size
+
+
+def test_pooler_output(model, input_data):
+    """Test if pooler output is correct"""
+    output = model(input_data)
+    assert output.pooler_output.shape == (input_data.shape[0], 512, 1, 1)

@@ -93,7 +93,7 @@ class SpatialLearnedEmbeddings(nn.Module):
         """
         kernel = self.param(
             "kernel",
-            self.kernel_init,
+            nn.initializers.lecun_normal(),
             (self.height, self.width, self.channel, self.num_features),
             self.param_dtype,
         )
@@ -280,7 +280,7 @@ class ResNetEncoder(nn.Module):
                     x = x * x_mult
         if self.pre_pooling:
             return jax.lax.stop_gradient(x)
-            # return x
+        return x
 
         if self.pooling_method == "spatial_learned_embeddings":
             height, width, channel = x.shape[-3:]
@@ -564,3 +564,20 @@ if __name__ == "__main__":
         print(f"{k} max diff: {np.max(np.abs(jax_tensor.detach().numpy() - v.detach().numpy()))}")
         # assert jax_tensor.shape == v.shape
         # assert np.allclose(jax_tensor.detach().numpy(), v.detach().numpy(), atol=1e-7)
+
+    # Check last pooling method
+
+    # jax_height, jax_width, jax_channel = outputs.shape[-3:]
+    # jax_pooling_layer, vars = SpatialLearnedEmbeddings(
+    #     height=jax_height,
+    #     width=jax_width,
+    #     channel=jax_channel,
+    #     num_features=0,
+    # )
+
+    # jax_pooling_layer.apply(jax_pooling_layer, outputs)
+
+    # print(jax_pooling_layer.shape)
+    # print(pred.shape)
+    # print(f"mean diff: {np.mean(np.abs(jax_pooling_layer.detach().numpy() - pred.detach().numpy()))}")
+    # print(f"max diff: {np.max(np.abs(jax_pooling_layer.detach().numpy() - pred.detach().numpy()))}")

@@ -20,7 +20,7 @@ import torch.nn as nn
 from torch import Tensor
 from transformers import PreTrainedModel
 from transformers.activations import ACT2FN
-from transformers.modeling_outputs import BaseModelOutputWithNoAttention
+from transformers.modeling_outputs import BaseModelOutputWithNoAttention, BaseModelOutputWithPoolingAndNoAttention
 
 from .configuration_resnet import ResNet10Config
 
@@ -238,6 +238,31 @@ class ResNet10(PreTrainedModel):
         )
 
         self.encoder = Encoder(self.config)
+        self.pooler = nn.AdaptiveAvgPool2d(output_size=1)
+
+    def _init_pooler(self):
+        if self.config.pooler == "avg":
+            self.pooler = nn.AdaptiveAvgPool2d(output_size=1)
+        elif self.config.pooler == "max":
+            self.pooler = nn.MaxPool2d(kernel_size=3, stride=2)
+        elif self.config.pooler == "spatial_learned_embeddings":
+            raise ValueError("Invalid pooler, it exist in the hil serl version, but weights are missing")
+
+            # In the original HIl-SERL code is used SpatialLearnedEmbeddings as pooliing method
+            # Check https://github.com/rail-berkeley/hil-serl/blob/7d17d13560d85abffbd45facec17c4f9189c29c0/serl_launcher/serl_launcher/agents/continuous/sac.py#L490
+            # But weights for this custom layer are missing
+            # Probably it means that pretrained weights used other way of pooling - probably it's AvgPool2d
+            # self.pooler = nn.Sequential(
+            #     SpatialLearnedEmbeddings(
+            #         height=height,
+            #         width=width,
+            #         channel=channel,
+            #         num_features=self.num_spatial_blocks,
+            #     ),
+            #     nn.Dropout(0.1, deterministic=not train),
+            # )
+        else:
+            raise ValueError(f"Invalid pooler: {self.config.pooler}")
 
     def forward(self, x: Tensor, output_hidden_states: Optional[bool] = None) -> BaseModelOutputWithNoAttention:
         output_hidden_states = (
@@ -246,9 +271,12 @@ class ResNet10(PreTrainedModel):
         embedding_output = self.embedder(x)
         encoder_outputs = self.encoder(embedding_output, output_hidden_states=output_hidden_states)
 
-        return BaseModelOutputWithNoAttention(
+        pooler_output = self.pooler(encoder_outputs.last_hidden_state)
+
+        return BaseModelOutputWithPoolingAndNoAttention(
             last_hidden_state=encoder_outputs.last_hidden_state,
             hidden_states=encoder_outputs.hidden_states,
+            pooler_output=pooler_output,
         )
 
     def print_model_hash(self):

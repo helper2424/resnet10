@@ -68,6 +68,7 @@ class ResNet10Config(PretrainedConfig):
         hidden_sizes=[64, 128, 256, 512],
         depths=[1, 1, 1, 1],
         hidden_act="relu",
+        pooler="avg",
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -76,3 +77,4 @@ class ResNet10Config(PretrainedConfig):
         self.hidden_sizes = hidden_sizes
         self.depths = depths
         self.hidden_act = hidden_act
+        self.pooler = pooler
