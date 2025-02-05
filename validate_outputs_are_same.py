@@ -510,8 +510,8 @@ if __name__ == "__main__":
 
     print("Model output shape:", outputs.shape)
 
-    processor = AutoImageProcessor.from_pretrained("lilkm/resnet50_fix")
-    model = AutoModel.from_pretrained("lilkm/resnet50_fix", trust_remote_code=True)
+    processor = AutoImageProcessor.from_pretrained("lilkm/resnet10")
+    model = AutoModel.from_pretrained("lilkm/resnet10", trust_remote_code=True)
 
     dummy_input_1 = torch.zeros(1, 3, 128, 128)
     dummy_input_2 = torch.ones(1, 3, 128, 128)
