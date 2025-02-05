@@ -26,10 +26,50 @@ from .configuration_resnet import ResNet10Config
 
 
 class MaxPool2dJax(nn.Module):
+    """Mimics JAX's MaxPool with padding='SAME' for exact parity."""
+
+    def __init__(self, kernel_size, stride=2):
+        super().__init__()
+
+        # Ensure kernel_size and stride are tuples
+        self.kernel_size = kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
+        self.stride = stride if isinstance(stride, tuple) else (stride, stride)
+
+        self.maxpool = nn.MaxPool2d(
+            kernel_size=self.kernel_size,
+            stride=self.stride,
+            padding=0,  # No padding
+        )
+
+    def _compute_padding(self, input_height, input_width):
+        """Calculate asymmetric padding to match JAX's 'SAME' behavior."""
+
+        # Compute padding needed for height and width
+        pad_h = max(
+            0, (math.ceil(input_height / self.stride[0]) - 1) * self.stride[0] + self.kernel_size[0] - input_height
+        )
+        pad_w = max(
+            0, (math.ceil(input_width / self.stride[1]) - 1) * self.stride[1] + self.kernel_size[1] - input_width
+        )
+
+        # Asymmetric padding (JAX-style: more padding on the bottom/right if needed)
+        pad_top = pad_h // 2
+        pad_bottom = pad_h - pad_top
+        pad_left = pad_w // 2
+        pad_right = pad_w - pad_left
+
+        return (pad_left, pad_right, pad_top, pad_bottom)
+
     def forward(self, x):
+        """Apply asymmetric padding before convolution."""
+        _, _, h, w = x.shape
+
+        # Compute asymmetric padding
+        pad_left, pad_right, pad_top, pad_bottom = self._compute_padding(h, w)
         x = nn.functional.pad(
-            x, (0, 1, 0, 1), value=-float("inf")
+            x, (pad_left, pad_right, pad_top, pad_bottom), value=-float("inf")
         )  # Pad right/bottom by 1 to match JAX's maxpooling padding="SAME"
+
         return nn.MaxPool2d(kernel_size=3, stride=2, padding=0)(x)
 
 
@@ -53,7 +93,8 @@ class Conv2dJax(nn.Module):
         )
 
     def _compute_padding(self, input_height, input_width):
-        """Calculate asymmetric padding to match JAX's 'SAME' behavior."""
+        """Calculate asym
+        metric padding to match JAX's 'SAME' behavior."""
 
         # Compute padding needed for height and width
         pad_h = max(
@@ -193,7 +234,7 @@ class ResNet10(PreTrainedModel):
             #             return super().__call__(x)
             nn.GroupNorm(num_groups=4, eps=1e-5, num_channels=self.config.embedding_size),
             ACT2FN[self.config.hidden_act],
-            MaxPool2dJax(),
+            MaxPool2dJax(kernel_size=3, stride=2),
         )
 
         self.encoder = Encoder(self.config)
