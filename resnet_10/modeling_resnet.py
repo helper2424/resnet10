@@ -13,6 +13,7 @@
 # limitations under the License.
 # -----------------------------------------------------------------------------
 
+import math
 from typing import Optional
 
 import torch.nn as nn
@@ -23,39 +24,44 @@ from transformers.modeling_outputs import BaseModelOutputWithNoAttention
 
 from .configuration_resnet import ResNet10Config
 
-import math
 
-
-class JaxStyleMaxPool(nn.Module):
+class MaxPool2dJax(nn.Module):
     def forward(self, x):
-        x = nn.functional.pad(x, (0, 1, 0, 1), value=-float('inf'))  # Pad right/bottom by 1 to match JAX's maxpooling padding="SAME"
+        x = nn.functional.pad(
+            x, (0, 1, 0, 1), value=-float("inf")
+        )  # Pad right/bottom by 1 to match JAX's maxpooling padding="SAME"
         return nn.MaxPool2d(kernel_size=3, stride=2, padding=0)(x)
 
 
-class JaxStyleConv2d(nn.Module):
+class Conv2dJax(nn.Module):
     """Mimics JAX's Conv2D with padding='SAME' for exact parity."""
-    
+
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, bias=False):
         super().__init__()
-        
+
         # Ensure kernel_size and stride are tuples
         self.kernel_size = kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
         self.stride = stride if isinstance(stride, tuple) else (stride, stride)
-        
+
         self.conv = nn.Conv2d(
-            in_channels, out_channels, 
-            kernel_size=self.kernel_size, 
-            stride=self.stride, 
+            in_channels,
+            out_channels,
+            kernel_size=self.kernel_size,
+            stride=self.stride,
             padding=0,  # No padding
-            bias=bias
+            bias=bias,
         )
 
     def _compute_padding(self, input_height, input_width):
         """Calculate asymmetric padding to match JAX's 'SAME' behavior."""
-        
+
         # Compute padding needed for height and width
-        pad_h = max(0, (math.ceil(input_height / self.stride[0]) - 1) * self.stride[0] + self.kernel_size[0] - input_height)
-        pad_w = max(0, (math.ceil(input_width / self.stride[1]) - 1) * self.stride[1] + self.kernel_size[1] - input_width)
+        pad_h = max(
+            0, (math.ceil(input_height / self.stride[0]) - 1) * self.stride[0] + self.kernel_size[0] - input_height
+        )
+        pad_w = max(
+            0, (math.ceil(input_width / self.stride[1]) - 1) * self.stride[1] + self.kernel_size[1] - input_width
+        )
 
         # Asymmetric padding (JAX-style: more padding on the bottom/right if needed)
         pad_top = pad_h // 2
@@ -68,7 +74,7 @@ class JaxStyleConv2d(nn.Module):
     def forward(self, x):
         """Apply asymmetric padding before convolution."""
         _, _, h, w = x.shape
-        
+
         # Compute asymmetric padding
         pad_left, pad_right, pad_top, pad_bottom = self._compute_padding(h, w)
         x = nn.functional.pad(x, (pad_left, pad_right, pad_top, pad_bottom))
@@ -80,7 +86,7 @@ class BasicBlock(nn.Module):
     def __init__(self, in_channels, out_channels, activation, stride=1, norm_groups=4):
         super().__init__()
 
-        self.conv1 = JaxStyleConv2d(
+        self.conv1 = Conv2dJax(
             in_channels,
             out_channels,
             kernel_size=3,
@@ -90,13 +96,13 @@ class BasicBlock(nn.Module):
         self.norm1 = nn.GroupNorm(num_groups=norm_groups, num_channels=out_channels)
         self.act1 = ACT2FN[activation]
         self.act2 = ACT2FN[activation]
-        self.conv2 = JaxStyleConv2d(out_channels, out_channels, kernel_size=3, stride=1, bias=False)
+        self.conv2 = Conv2dJax(out_channels, out_channels, kernel_size=3, stride=1, bias=False)
         self.norm2 = nn.GroupNorm(num_groups=norm_groups, num_channels=out_channels)
-        
+
         self.shortcut = None
         if in_channels != out_channels:
             self.shortcut = nn.Sequential(
-                JaxStyleConv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
+                Conv2dJax(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
                 nn.GroupNorm(num_groups=norm_groups, num_channels=out_channels),
             )
 
@@ -187,7 +193,7 @@ class ResNet10(PreTrainedModel):
             #             return super().__call__(x)
             nn.GroupNorm(num_groups=4, eps=1e-5, num_channels=self.config.embedding_size),
             ACT2FN[self.config.hidden_act],
-            JaxStyleMaxPool(),
+            MaxPool2dJax(),
         )
 
         self.encoder = Encoder(self.config)

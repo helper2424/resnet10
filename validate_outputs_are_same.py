@@ -1,3 +1,4 @@
+import argparse
 import functools as ft
 import pickle
 from functools import partial
@@ -495,6 +496,16 @@ def visualize_feature_maps(feature_maps, max_features=16):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    # Required parameters
+    parser.add_argument(
+        "--model_name",
+        default=None,
+        type=str,
+        help=("The name of the model you wish to check."),
+    )
+    args = parser.parse_args()
+
     jax_model = resnetv1_configs["resnetv1-10-frozen"]()
 
     jax_model, new_params = initialize_and_load_weights()
@@ -510,8 +521,8 @@ if __name__ == "__main__":
 
     print("Model output shape:", outputs.shape)
 
-    processor = AutoImageProcessor.from_pretrained("lilkm/resnet50_fix")
-    model = AutoModel.from_pretrained("lilkm/resnet50_fix", trust_remote_code=True)
+    processor = AutoImageProcessor.from_pretrained(args.model_name)
+    model = AutoModel.from_pretrained(args.model_name, trust_remote_code=True)
 
     dummy_input_1 = torch.zeros(1, 3, 128, 128)
     dummy_input_2 = torch.ones(1, 3, 128, 128)
