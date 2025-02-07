@@ -1,5 +1,6 @@
 import argparse
 import functools as ft
+import os
 import pickle
 from functools import partial
 from typing import Any, Callable, Optional, Sequence, Tuple
@@ -278,38 +279,36 @@ class ResNetEncoder(nn.Module):
                     cond_out = nn.Dense(x.shape[-1], kernel_init=nn.initializers.xavier_normal())(cond_var)
                     x_mult = jnp.expand_dims(jnp.expand_dims(cond_out, 1), 1)
                     x = x * x_mult
-        if self.pre_pooling:
-            return jax.lax.stop_gradient(x)
-        return x
 
-        if self.pooling_method == "spatial_learned_embeddings":
-            height, width, channel = x.shape[-3:]
-            x = SpatialLearnedEmbeddings(
-                height=height,
-                width=width,
-                channel=channel,
-                num_features=self.num_spatial_blocks,
-            )(x)
-            x = nn.Dropout(0.1, deterministic=not train)(x)
-        elif self.pooling_method == "spatial_softmax":
-            height, width, channel = x.shape[-3:]
-            pos_x, pos_y = jnp.meshgrid(jnp.linspace(-1.0, 1.0, height), jnp.linspace(-1.0, 1.0, width))
-            pos_x = pos_x.reshape(height * width)
-            pos_y = pos_y.reshape(height * width)
-            x = SpatialSoftmax(height, width, channel, pos_x, pos_y, self.softmax_temperature)(x)
-        elif self.pooling_method == "avg":
-            x = jnp.mean(x, axis=(-3, -2))
-        elif self.pooling_method == "max":
-            x = jnp.max(x, axis=(-3, -2))
-        elif self.pooling_method == "none":
-            pass
-        else:
-            raise ValueError("pooling method not found")
+        # if self.pooling_method == "spatial_learned_embeddings":
+        #     height, width, channel = x.shape[-3:]
+        #     x = SpatialLearnedEmbeddings(
+        #         height=height,
+        #         width=width,
+        #         channel=channel,
+        #         num_features=self.num_spatial_blocks,
+        #     )(x)
+        #     x = nn.Dropout(0.1, deterministic=not train)(x)
+        # elif self.pooling_method == "spatial_softmax":
+        #     height, width, channel = x.shape[-3:]
+        #     pos_x, pos_y = jnp.meshgrid(jnp.linspace(-1.0, 1.0, height), jnp.linspace(-1.0, 1.0, width))
+        #     pos_x = pos_x.reshape(height * width)
+        #     pos_y = pos_y.reshape(height * width)
+        #     x = SpatialSoftmax(height, width, channel, pos_x, pos_y, self.softmax_temperature)(x)
+        # elif self.pooling_method == "avg":
+        x = jnp.mean(x, axis=(-3, -2))
+        jax_hidden_states["pooler_output"] = x
+        # elif self.pooling_method == "max":
+        #     x = jnp.max(x, axis=(-3, -2))
+        # elif self.pooling_method == "none":
+        #     pass
+        # else:
+        #     raise ValueError("pooling method not found")
 
-        if self.bottleneck_dim is not None:
-            x = nn.Dense(self.bottleneck_dim)(x)
-            x = nn.LayerNorm()(x)
-            x = nn.tanh(x)
+        # if self.bottleneck_dim is not None:
+        #     x = nn.Dense(self.bottleneck_dim)(x)
+        #     x = nn.LayerNorm()(x)
+        #     x = nn.tanh(x)
 
         return x
 
@@ -454,31 +453,6 @@ def visualize_tensor(tensor, title=None, save_path=None):
     plt.show()
 
 
-# 3. Batch visualization
-def visualize_batches(batches, cols=2, rows=3, title="Batch Visualization"):
-    """Visualize a batch of images."""
-
-    # Calculate grid size
-    # fig, axes = plt.subplots(rows, cols, figsize=(10, 10))
-    # fig.suptitle(title)
-
-    # batch = batches[0]
-
-    # for rw in range(rows):
-    #     for col in range(cols):
-    #         item = batch[col][rw]
-    #         item = row.view(1, row.shape[0], row.shape[1])
-
-    #         row.squeeze(0).numpy()
-    #         axes[rw, col].imshow(item, cmap="gray")
-
-    #         # axes[row, col].axis('off')
-
-    # plt.tight_layout()
-    # # plt.colorbar()
-    # plt.show()
-
-
 # 4. Using torchvision's make_grid
 def visualize_with_grid(batch, nrow=8, title="Grid Visualization"):
     """Visualize images in a grid using torchvision."""
@@ -493,6 +467,134 @@ def visualize_with_grid(batch, nrow=8, title="Grid Visualization"):
 # Example with feature maps
 def visualize_feature_maps(feature_maps, max_features=16):
     pass
+
+
+def reset_weights(m):
+    if isinstance(m, torch.nn.Conv2d) or isinstance(m, torch.nn.Linear):
+        torch.nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
+        if m.bias is not None:
+            torch.nn.init.constant_(m.bias, 0)
+    elif isinstance(m, torch.nn.LayerNorm):
+        torch.nn.init.constant_(m.weight, 1)
+        torch.nn.init.constant_(m.bias, 0)
+    elif isinstance(m, torch.nn.GroupNorm):
+        torch.nn.init.constant_(m.weight, 1)
+        torch.nn.init.constant_(m.bias, 0)
+
+
+def visualize_diff(diff_array, prefix, output_dir="diff_images"):
+    """
+    Visualize difference maps stored in a numpy array by saving them as grayscale images.
+
+    Parameters:
+        diff_array (np.ndarray): The difference array. Typically with shape (B, C, H, W).
+                                 It can also be 2D (H, W) or 3D (C, H, W).
+        output_dir (str): Directory where the images will be saved.
+    """
+    # If the input array is 2D or 3D, add dimensions to make it (B, C, H, W)
+    if diff_array.ndim == 2:
+        # Single grayscale image: shape becomes (1, 1, H, W)
+        diff_array = diff_array[None, None, :, :]
+    elif diff_array.ndim == 3:
+        # Single batch with multiple channels: shape becomes (1, C, H, W)
+        diff_array = diff_array[None, :, :, :]
+    elif diff_array.ndim != 4:
+        raise ValueError(f"Unsupported array shape {diff_array.shape}. Expected 2D, 3D, or 4D array.")
+
+    B, C, H, W = diff_array.shape
+
+    # Create the output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Loop over each batch and channel
+    for b in range(B):
+        for c in range(C):
+            # Extract the HxW difference image for this batch/channel
+            img = diff_array[b, c]
+            # For visualization, take the absolute difference so that negative differences are shown
+            img_abs = np.abs(img)
+            # Normalize the image to the range [0, 255]
+            max_val = np.max(img_abs)
+            if max_val > 0:
+                img_norm = (img_abs / max_val) * 255
+            else:
+                img_norm = img_abs  # if max is 0, the image is all zeros (no differences)
+            # Convert to unsigned 8-bit integer type
+            img_uint8 = img_norm.astype(np.uint8)
+
+            # Construct a filename and save the image using matplotlib's imsave with a grayscale colormap.
+            filename = os.path.join(output_dir, f"{prefix}_batch_{b}_channel_{c}.png")
+            plt.imsave(filename, img_uint8, cmap="gray")
+            print(f"Saved image: {filename}")
+
+
+def visualize_diff_all(diff_array, prefix, output_file="diff_all.png"):
+    """
+    Visualize difference maps stored in a numpy array by arranging them into a grid
+    and saving the result in one image file.
+
+    The grid will have one row per batch element and one column per channel.
+
+    Parameters:
+        diff_array (np.ndarray): The difference array. Typically with shape (B, C, H, W).
+                                 It can also be 2D (H, W) or 3D (C, H, W).
+        prefix (str): A string prefix to include in the title or filename if needed.
+        output_file (str): Filename for the combined image.
+    """
+    # If the input array is 2D or 3D, add dimensions to make it (B, C, H, W)
+    if diff_array.ndim == 2:
+        # Single grayscale image: shape becomes (1, 1, H, W)
+        diff_array = diff_array[None, None, :, :]
+    elif diff_array.ndim == 3:
+        # Single batch with multiple channels: shape becomes (1, C, H, W)
+        diff_array = diff_array[None, :, :, :]
+    elif diff_array.ndim != 4:
+        raise ValueError(f"Unsupported array shape {diff_array.shape}. Expected 2D, 3D, or 4D array.")
+
+    B, C, H, W = diff_array.shape
+
+    # Create a figure with subplots arranged as (B rows x C columns)
+    # Adjust figsize as needed (here each subplot gets roughly a 3x3 inch square)
+    fig, axs = plt.subplots(B, C, figsize=(C * 3, B * 3))
+
+    # If there's only one row or one column, ensure axs is 2D for consistent indexing.
+    if B == 1 and C == 1:
+        axs = np.array([[axs]])
+    elif B == 1:
+        axs = np.expand_dims(axs, axis=0)
+    elif C == 1:
+        axs = np.expand_dims(axs, axis=1)
+
+    # Iterate over each batch and channel
+    for b in range(B):
+        for c in range(C):
+            # Extract the HxW diff image for this batch/channel
+            img = diff_array[b, c]
+            # Take the absolute value so that negative differences are shown as well
+            img_abs = np.abs(img)
+            # Normalize the image to the range [0, 255]
+            max_val = np.max(img_abs)
+            if max_val > 0:
+                img_norm = (img_abs / max_val) * 255
+            else:
+                img_norm = img_abs  # if max is 0, the image is all zeros (no difference)
+            # Convert to unsigned 8-bit integer type
+            img_uint8 = img_norm.astype(np.uint8)
+
+            # Plot the image in the grid
+            ax = axs[b, c]
+            ax.imshow(img_uint8, cmap="gray")
+            ax.set_title(f"Batch {b}, Channel {c}")
+            ax.axis("off")
+
+    # Add an overall title if you like
+    fig.suptitle(f"{prefix} - Combined Diff Visualization", fontsize=16)
+    plt.tight_layout(rect=[0, 0, 1, 0.95])  # leave space for the title
+
+    # Save the figure to file
+    plt.savefig(output_file)
+    plt.close(fig)
+    print(f"Saved combined diff image: {output_file}")
 
 
 if __name__ == "__main__":
@@ -514,7 +616,7 @@ if __name__ == "__main__":
     real_input_1 = jnp.zeros((1, 128, 128, 3), dtype=jnp.float32)
     real_input_2 = jnp.ones((1, 128, 128, 3), dtype=jnp.float32)
 
-    real_input = jnp.concatenate([real_input_1], axis=0)
+    real_input = jnp.concatenate([real_input_1, real_input_2], axis=0)
 
     # Run inference
     outputs = jax_model.apply({"params": new_params}, real_input, train=False)
@@ -526,7 +628,7 @@ if __name__ == "__main__":
 
     dummy_input_1 = torch.zeros(1, 3, 128, 128)
     dummy_input_2 = torch.ones(1, 3, 128, 128)
-    dummy_input = torch.cat([dummy_input_1], dim=0)
+    dummy_input = torch.cat([dummy_input_1, dummy_input_2], dim=0)
 
     processsed_input = processor(dummy_input, return_tensors="pt")
     processsed_input = processsed_input["pixel_values"]
@@ -543,23 +645,39 @@ if __name__ == "__main__":
     torch_hidden_states["ResNetBlock_2"] = model.encoder.stages[2](torch_hidden_states["ResNetBlock_1"])
     torch_hidden_states["ResNetBlock_3"] = model.encoder.stages[3](torch_hidden_states["ResNetBlock_2"])
 
+    torch_hidden_states["pooler_output"] = model.pooler(torch_hidden_states["ResNetBlock_3"])
+
     torch_model_output = model(processsed_input, output_hidden_states=True)
     pred = torch_model_output.last_hidden_state
 
     # In order to compare the outputs, we need to convert the PyTorch output to JAX
     # We have to permute the channel dimension of torch array because jax is channel-last
 
-    outputs = jax_to_torch(outputs)
+    # outputs = jax_to_torch(outputs)
 
-    assert outputs.shape == pred.shape
+    # assert outputs.shape == pred.shape
     # Compare the outputs
     # assert np.allclose(outputs.detach().numpy(), pred.detach().numpy(), atol=1e-6)
 
     for k, v in torch_hidden_states.items():
         print(k)
-        jax_tensor = jax_to_torch(jax_hidden_states[k])
+        if k != "pooler_output":
+            jax_tensor = jax_to_torch(jax_hidden_states[k])
+            v = v.squeeze(-1, -2)
+        else:
+            jax_tensor = jax_hidden_states[k]
+            jax_tensor = torch.from_numpy(np.array(jax_tensor))
+
         print(jax_tensor.shape)
         print(v.shape)
+
+        diff = jax_tensor.detach().numpy() - v.detach().numpy()
+
+        max_diff = np.max(np.abs(diff))
+
+        if max_diff > 0.000001:
+            visualize_diff_all(diff, k, f"resnet10_diffs_{k}.png")
+
         print(f"{k} mean diff: {np.mean(np.abs(jax_tensor.detach().numpy() - v.detach().numpy()))}")
         print(f"{k} max diff: {np.max(np.abs(jax_tensor.detach().numpy() - v.detach().numpy()))}")
         # assert jax_tensor.shape == v.shape
