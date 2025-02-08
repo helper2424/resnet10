@@ -1,0 +1,54 @@
+name: Python application
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.5.1
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Load cached venv
+      id: cached-poetry-dependencies
+      uses: actions/cache@v3
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root
+
+    - name: Install project
+      run: poetry install --no-interaction
+
+    - name: Lint with ruff
+      run: poetry run ruff check .
+
+    - name: Format with black
+      run: poetry run black . --check
+
+    - name: Check imports with isort
+      run: poetry run isort . --check-only --diff
+
+    - name: Type check with mypy
+      run: poetry run mypy .
+
+    - name: Test with pytest
+      run: poetry run pytest

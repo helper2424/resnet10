@@ -16,7 +16,7 @@ The model is available on Hugging Face Hub. You can use it as follows:
 ```python
 from transformers import AutoModel
 
-model = AutoModel.from_pretrained("helper2424/resnet10-imagenet-1k", trust_remote_code=True)
+model = AutoModel.from_pretrained("helper2424/resnet10", trust_remote_code=True)
 ```
 
 ### Installation
@@ -41,7 +41,7 @@ model = AutoModel.from_pretrained("helper2424/resnet10-imagenet-1k", trust_remot
 ### How to convert
 
 ```bash
-poetry run python convert_jax_to_pytorch.py --model_name helper2424/resnet10-imagenet-1k --push_to_hub True
+poetry run python convert_jax_to_pytorch.py --model_name helper2424/resnet10 --push_to_hub True
 ```
 
 ### Validation
@@ -49,5 +49,19 @@ poetry run python convert_jax_to_pytorch.py --model_name helper2424/resnet10-ima
 This script will download the model from the hub and validate that it works as expected.
 
 ```bash
-poetry run python resnet_10/validate.py --model_name helper2424/resnet10-imagenet-1k
+poetry run python validate_outputs_are_same.py --model_name helper2424/resnet10
+```
+
+### Citation
+
+```bibtex
+@misc{resnet10,
+   title = "Resnet10",
+   author = "Eugene Mironov and Khalil Meftah and Adil Zouitine and Michel Aractingi and Ke Wang",
+   month = jan,
+   year = "2025",
+   address = "Online",
+   publisher = "Hugging Face",
+   url = "https://huggingface.co/helper2424/resnet10",
+}
 ```

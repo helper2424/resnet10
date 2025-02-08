@@ -87,9 +87,13 @@ def apply_block_weights(block, jax_state_dict):
 
     if "conv_proj" in jax_state_dict:
         # Convolution
-        block.shortcut[0].load_state_dict(convert_jax_conv_state_dict_to_torch_conv_state_dict(jax_state_dict["conv_proj"]))
+        block.shortcut[0].load_state_dict(
+            convert_jax_conv_state_dict_to_torch_conv_state_dict(jax_state_dict["conv_proj"])
+        )
         # Group Norm
-        block.shortcut[1].load_state_dict(convert_jax_norm_state_dict_to_torch_norm_state_dict(jax_state_dict["norm_proj"]))
+        block.shortcut[1].load_state_dict(
+            convert_jax_norm_state_dict_to_torch_norm_state_dict(jax_state_dict["norm_proj"])
+        )
 
 
 def convert_jax_conv_state_dict_to_torch_conv_state_dict(jax_state_dict):
@@ -106,9 +110,7 @@ def convert_jax_norm_state_dict_to_torch_norm_state_dict(jax_state_dict):
 
 def apply_pretrained_resnet10_params(model, params):
     model.embedder[0].load_state_dict(
-        {
-            "weight": torch.Tensor(list(params["conv_init"]["kernel"].tolist())).permute(3, 2, 0, 1)
-        }
+        {"weight": torch.Tensor(list(params["conv_init"]["kernel"].tolist())).permute(3, 2, 0, 1)}
     )
 
     model.embedder[1].load_state_dict(
@@ -124,6 +126,18 @@ def apply_pretrained_resnet10_params(model, params):
 
 
 def create_card_model_content(model_name):
+    citation = """
+@misc{resnet10,
+   title = "Resnet10",
+   author = "Eugene Mironov and Khalil Meftah and Adil Zouitine and Michel Aractingi and Ke Wang",
+   month = jan,
+   year = "2025",
+   address = "Online",
+   publisher = "Hugging Face",
+   url = "https://huggingface.co/helper2424/resnet10",
+}
+"""
+
     return f"""
 ---
 language: en
@@ -168,10 +182,21 @@ This model was converted using an automated JAX to PyTorch conversion pipeline, 
 - Architecture matching
 - Numerical stability
 
+
+## Code
+
+https://github.com/helper2424/resnet10
+
+
 ## Usage
 ```python
 from transformers import AutoModel, AutoTokenizer
 model = AutoModel.from_pretrained("{model_name}")
+```
+
+## Citation
+```bibtex
+{citation}
 ```
 """
 
