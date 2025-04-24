@@ -123,6 +123,21 @@ class Conv2dJax(nn.Module):
         return self.conv(x)
 
 
+class MyGroupNorm(nn.Module):
+    def __init__(self, num_groups, num_channels, eps=1e-5, affine=True):
+        super().__init__()
+        self.group_norm = nn.GroupNorm(num_groups, num_channels, eps, affine)
+
+    def forward(self, x):
+        if x.ndim == 3:
+            x = x.unsqueeze(0)
+            x = self.group_norm(x)
+            x = x.squeeze(0)
+        else:
+            x = self.group_norm(x)
+        return x
+
+
 class BasicBlock(nn.Module):
     def __init__(self, in_channels, out_channels, activation, stride=1, norm_groups=4):
         super().__init__()
@@ -134,17 +149,17 @@ class BasicBlock(nn.Module):
             stride=stride,
             bias=False,
         )
-        self.norm1 = nn.GroupNorm(num_groups=norm_groups, num_channels=out_channels)
+        self.norm1 = MyGroupNorm(num_groups=norm_groups, num_channels=out_channels)
         self.act1 = ACT2FN[activation]
         self.act2 = ACT2FN[activation]
         self.conv2 = Conv2dJax(out_channels, out_channels, kernel_size=3, stride=1, bias=False)
-        self.norm2 = nn.GroupNorm(num_groups=norm_groups, num_channels=out_channels)
+        self.norm2 = MyGroupNorm(num_groups=norm_groups, num_channels=out_channels)
 
         self.shortcut = None
         if in_channels != out_channels:
             self.shortcut = nn.Sequential(
                 Conv2dJax(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
-                nn.GroupNorm(num_groups=norm_groups, num_channels=out_channels),
+                MyGroupNorm(num_groups=norm_groups, num_channels=out_channels),
             )
 
     def forward(self, x):
@@ -222,17 +237,7 @@ class ResNet10(PreTrainedModel):
                 padding=3,
                 bias=False,
             ),
-            # The original code has a small trick -
-            # https://github.com/rail-berkeley/hil-serl/blob/main/serl_launcher/serl_launcher/vision/resnet_v1.py#L119
-            # class MyGroupNorm(nn.GroupNorm):
-            #     def __call__(self, x):
-            #         if x.ndim == 3:
-            #             x = x[jnp.newaxis]
-            #             x = super().__call__(x)
-            #             return x[0]
-            #         else:
-            #             return super().__call__(x)
-            nn.GroupNorm(num_groups=4, eps=1e-5, num_channels=self.config.embedding_size),
+            MyGroupNorm(num_groups=4, eps=1e-5, num_channels=self.config.embedding_size),
             ACT2FN[self.config.hidden_act],
             MaxPool2dJax(kernel_size=3, stride=2),
         )
