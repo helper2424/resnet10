@@ -7,30 +7,30 @@ dependencies = [
     "distrax>=0.1.2",
     "chex>=0.1.85",
     "optax>=0.1.5",
+    "transformers>=4.50.3",
 ]
 name = "resnet_10"
 version = "0.1.0"
 description = "The ResNet-10 model converted from JAX to PyTorch. The original code is from https://github.com/rail-berkeley/hil-serl/blob/7d17d13560d85abffbd45facec17c4f9189c29c0/serl_launcher/serl_launcher/utils/train_utils.py#L103"
-authors = [{ name = "Eugene Mironov", email = "helper2424@gmail.com" },
-            { name = "Khalil Meftah", email = "kmeftah.khalil@gmail.com"},
-            { name = "Adil Zouitine", email = "adilzouitinegm@gmail.com"},
-            { name = "Michel Aractingi", email = "michel.aractingi@huggingface.co"},
-            { name = "Ke Wang", email = "superwk1017@gmail.com"}]
+authors = [
+    { name = "Eugene Mironov", email = "helper2424@gmail.com" },
+    { name = "Khalil Meftah", email = "kmeftah.khalil@gmail.com"},
+    { name = "Adil Zouitine", email = "adilzouitinegm@gmail.com"},
+    { name = "Michel Aractingi", email = "michel.aractingi@huggingface.co"},
+    { name = "Ke Wang", email = "superwk1017@gmail.com"}
+]
 readme = "README.md"
 requires-python = ">=3.10"
 
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.group.dev.dependencies]
-black = "^25.1.0"
-flake8 = "^7.1.1"
-isort = "^6.0.0"
-mypy = "^1.14.1"
-pylint = "^3.3.4"
-pre-commit = "^4.1.0"
+[project.optional-dependencies]
+dev = [
+    "black>=25.1.0",
+    "flake8>=7.1.1",
+    "isort>=6.0.0",
+    "mypy>=1.14.1",
+    "pylint>=3.3.4",
+    "pre-commit>=4.1.0",
+]
 
 [tool.black]
 line-length = 120

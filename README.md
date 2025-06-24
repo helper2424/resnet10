@@ -23,7 +23,7 @@ model = AutoModel.from_pretrained("helper2424/resnet10", trust_remote_code=True)
 
 1. Install Poetry:
    ```bash
-   curl -sSL https://install.python-poetry.org | python3 -
+   curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
 2. Clone the repository:
@@ -34,22 +34,28 @@ model = AutoModel.from_pretrained("helper2424/resnet10", trust_remote_code=True)
 
 3. Install dependencies:
    ```bash
-   poetry install
+   uv sync
    ```
 
 
 ### How to convert
 
 ```bash
-poetry run python convert_jax_to_pytorch.py --model_name helper2424/resnet10 --push_to_hub True
+uv run python convert_jax_to_pytorch.py --model_name helper2424/resnet10 --push_to_hub True
 ```
 
 ### Validation
 
-This script will download the model from the hub and validate that it works as expected.
+This script will download the model from the hub and validate that inference from the jax Resnet10 version is the same as the Pytorch
 
 ```bash
-poetry run python validate_outputs_are_same.py --model_name helper2424/resnet10
+uv run python validate_outputs_are_same.py --model_name helper2424/resnet10
+```
+
+Also, you can run the following script to check Pytorch Resnet10 convrgenes for small classification task:
+
+```bash
+uv run python validate_convergenes.py --model_name helper2424/resnet10
 ```
 
 ### Citation
