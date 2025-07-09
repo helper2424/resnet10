@@ -243,6 +243,15 @@ class ResNet10(PreTrainedModel):
         )
 
         self.encoder = Encoder(self.config)
+        self._init_pooler()
+
+    def _init_pooler(self):
+        if self.config.pooler == "avg":
+            self.pooler = nn.AdaptiveAvgPool2d(output_size=1)
+        elif self.config.pooler == "max":
+            self.pooler = nn.MaxPool2d(kernel_size=3, stride=2)
+        else:
+            self.pooler = None
 
     def forward(self, x: Tensor, output_hidden_states: Optional[bool] = None) -> BaseModelOutputWithNoAttention:
         output_hidden_states = (
@@ -251,9 +260,15 @@ class ResNet10(PreTrainedModel):
         embedding_output = self.embedder(x)
         encoder_outputs = self.encoder(embedding_output, output_hidden_states=output_hidden_states)
 
+        if self.pooler is not None:
+            pooler_output = self.pooler(encoder_outputs.last_hidden_state)
+        else:
+            pooler_output = None
+
         return BaseModelOutputWithNoAttention(
             last_hidden_state=encoder_outputs.last_hidden_state,
             hidden_states=encoder_outputs.hidden_states,
+            pooler_output=pooler_output,
         )
 
     def print_model_hash(self):
