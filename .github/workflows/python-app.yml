@@ -23,7 +23,7 @@ jobs:
         version: "latest"
 
     - name: Install dependencies
-      run: uv sync
+      run: uv sync --extra dev
 
     # - name: Lint with ruff
     #   run: uv run ruff check .
