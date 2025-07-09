@@ -20,7 +20,7 @@ import torch.nn as nn
 from torch import Tensor
 from transformers import PreTrainedModel
 from transformers.activations import ACT2FN
-from transformers.modeling_outputs import BaseModelOutputWithNoAttention
+from transformers.modeling_outputs import BaseModelOutputWithNoAttention, BaseModelOutputWithPoolingAndNoAttention
 
 from .configuration_resnet import ResNet10Config
 
@@ -216,7 +216,7 @@ class Encoder(nn.Module):
         if output_hidden_states:
             hidden_states = hidden_states + (hidden_state,)
 
-        return BaseModelOutputWithNoAttention(
+        return BaseModelOutputWithPoolingAndNoAttention(
             last_hidden_state=hidden_state,
             hidden_states=hidden_states,
         )
@@ -265,7 +265,7 @@ class ResNet10(PreTrainedModel):
         else:
             pooler_output = None
 
-        return BaseModelOutputWithNoAttention(
+        return BaseModelOutputWithPoolingAndNoAttention(
             last_hidden_state=encoder_outputs.last_hidden_state,
             hidden_states=encoder_outputs.hidden_states,
             pooler_output=pooler_output,

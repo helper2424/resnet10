@@ -31,17 +31,31 @@ from resnet_10.modeling_resnet import ResNet10
 # The original code is copied from https://github.com/rail-berkeley/hil-serl/blob/7d17d13560d85abffbd45facec17c4f9189c29c0/serl_launcher/serl_launcher/utils/train_utils.py#L103
 # It downloads the pretrained ResNet-10 weights for HIL-SERL implementation
 # from the github release and loads them into a dictionary.
-def load_resnet10_params(image_keys=("image",), public=True):
+def load_resnet10_params(weights_path=None):
     """
-    Load pretrained resnet10 params from github release to an agent.
-    :return: agent with pretrained resnet10 params
+    Load pretrained resnet10 params from github release or custom path.
+
+    Args:
+        image_keys: Image keys for compatibility (unused in current implementation)
+        public: If True, download from GitHub release. If False, use local file.
+        weights_path: Optional custom path to weights file. If provided, this takes precedence.
+
+    Returns:
+        dict: Dictionary containing the pretrained ResNet-10 parameters
     """
-    file_name = "resnet10_params.pkl"
-    if not public:  # if github repo is not public, load from local file
-        with open(file_name, "rb") as f:
+    if weights_path is not None and weights_path != "":  # if github repo is not public, load from local file
+        weights_path = os.path.expanduser(weights_path)  # Expand ~ and other path shortcuts
+        if not os.path.exists(weights_path):
+            raise FileNotFoundError(f"Weights file not found at: {weights_path}")
+
+        print(f"Loading ResNet-10 parameters from custom path: {weights_path}")
+        with open(weights_path, "rb") as f:
             encoder_params = pkl.load(f)
+        print("Successfully loaded parameters from custom weights file")
+        return encoder_params
     else:  # when repo is released, download from url
         # Construct the full path to the file
+        file_name = "resnet10_params.pkl"
         file_path = os.path.expanduser("~/.serl/")
         if not os.path.exists(file_path):
             os.makedirs(file_path)
@@ -217,6 +231,13 @@ if __name__ == "__main__":
         required=False,
         help="If True, push model and image processor to the hub.",
     )
+    parser.add_argument(
+        "--weights_path",
+        default=None,
+        type=str,
+        required=False,
+        help="Optional path to custom weights file. If not provided, will download from GitHub release.",
+    )
 
     args = parser.parse_args()
 
@@ -226,6 +247,7 @@ if __name__ == "__main__":
         hidden_act="relu",
         hidden_sizes=[64, 128, 256, 512],  # Smaller hidden sizes for ResNet-10
         depths=[1, 1, 1, 1],  # One block per stage for ResNet-10
+        pooler=None,
     )
 
     if args.push_to_hub:
@@ -240,7 +262,7 @@ if __name__ == "__main__":
         print(f"Config loaded successfully from Hugging Face Hub! {args.model_name}")
 
     model = ResNet10(config)
-    params = load_resnet10_params()
+    params = load_resnet10_params(weights_path=args.weights_path)
     model.train()
     apply_pretrained_resnet10_params(model, params)
 
