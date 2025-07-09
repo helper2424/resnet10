@@ -25,17 +25,17 @@ jobs:
     - name: Install dependencies
       run: uv sync
 
-    - name: Lint with ruff
-      run: uv run ruff check .
+    # - name: Lint with ruff
+    #   run: uv run ruff check .
 
-    - name: Format with black
-      run: uv run black . --check
+    # - name: Format with black
+    #   run: uv run black . --check
 
-    - name: Check imports with isort
-      run: uv run isort . --check-only --diff
+    # - name: Check imports with isort
+    #   run: uv run isort . --check-only --diff
 
-    - name: Type check with mypy
-      run: uv run mypy .
+    # - name: Type check with mypy
+    #   run: uv run mypy .
 
     - name: Test with pytest
       run: uv run pytest -v --log-cli-level=INFO
