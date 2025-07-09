@@ -103,8 +103,8 @@ def convert_jax_conv_state_dict_to_torch_conv_state_dict(jax_state_dict):
 
 def convert_jax_norm_state_dict_to_torch_norm_state_dict(jax_state_dict):
     return {
-        "weight": torch.Tensor(jax_state_dict["scale"].tolist()),
-        "bias": torch.Tensor(jax_state_dict["bias"].tolist()),
+        "group_norm.weight": torch.Tensor(jax_state_dict["scale"].tolist()),
+        "group_norm.bias": torch.Tensor(jax_state_dict["bias"].tolist()),
     }
 
 
@@ -115,8 +115,8 @@ def apply_pretrained_resnet10_params(model, params):
 
     model.embedder[1].load_state_dict(
         {
-            "weight": torch.Tensor(params["norm_init"]["scale"].tolist()),
-            "bias": torch.Tensor(params["norm_init"]["bias"].tolist()),
+            "group_norm.weight": torch.Tensor(params["norm_init"]["scale"].tolist()),
+            "group_norm.bias": torch.Tensor(params["norm_init"]["bias"].tolist()),
         },
         strict=True,
     )
