@@ -41,7 +41,7 @@ model = AutoModel.from_pretrained("helper2424/resnet10", trust_remote_code=True)
 ### How to convert
 
 ```bash
-uv run python convert_jax_to_pytorch.py --model_name helper2424/resnet10 --push_to_hub True
+uv run python ./convert_jax_to_pytroch.py --model_name helper2424/resnet10 --push_to_hub True
 ```
 
 ### Validation
@@ -57,6 +57,16 @@ Also, you can run the following script to check Pytorch Resnet10 convrgenes for 
 ```bash
 uv run python validate_convergenes.py --model_name helper2424/resnet10
 ```
+
+### Update
+
+To update source code of the model use the following script:
+
+```bash
+uv run python update_model_source.py --model_name helper2424/resnet10
+```
+
+This script will download the model from HF hub, update the
 
 ### Citation
 
