@@ -17,38 +17,25 @@ jobs:
       with:
         python-version: "3.10"
 
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
       with:
-        version: 2.0.1
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-
-    - name: Load cached venv
-      id: cached-poetry-dependencies
-      uses: actions/cache@v3
-      with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+        version: "latest"
 
     - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root
-
-    - name: Install project
-      run: poetry install --no-interaction
+      run: uv sync
 
     - name: Lint with ruff
-      run: poetry run ruff check .
+      run: uv run ruff check .
 
     - name: Format with black
-      run: poetry run black . --check
+      run: uv run black . --check
 
     - name: Check imports with isort
-      run: poetry run isort . --check-only --diff
+      run: uv run isort . --check-only --diff
 
     - name: Type check with mypy
-      run: poetry run mypy .
+      run: uv run mypy .
 
     - name: Test with pytest
-      run: poetry run pytest
+      run: uv run pytest -v --log-cli-level=INFO
