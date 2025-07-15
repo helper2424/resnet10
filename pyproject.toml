@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["resnet_10*"]
-exclude = ["data*", "weights*", "helper2424*", "resnet10_diffs*"]
+exclude = []
 
 [project]
 dependencies = [
