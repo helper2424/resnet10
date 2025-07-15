@@ -26,11 +26,14 @@ from torchvision.datasets import CIFAR10
 from torchvision.transforms import ToTensor
 
 from convert_jax_to_pytroch import apply_pretrained_resnet10_params, load_resnet10_params
+
 # Import the necessary modules
-from resnet_10.classifiers.heads import (create_binary_classifier_head,
-                                         create_binary_classifier_with_spatial_embeddings,
-                                         create_multiclass_classifier_head,
-                                         create_multiclass_classifier_with_spatial_embeddings)
+from resnet_10.classifiers.heads import (
+    create_binary_classifier_head,
+    create_binary_classifier_with_spatial_embeddings,
+    create_multiclass_classifier_head,
+    create_multiclass_classifier_with_spatial_embeddings,
+)
 from resnet_10.classifiers.training import train_binary_classifier, train_multiclass_classifier
 from resnet_10.classifiers.utils import one_vs_rest
 from resnet_10.classifiers.validation import validate_binary_classifier, validate_multiclass_classifier

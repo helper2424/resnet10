@@ -5,9 +5,13 @@ This package provides modular components for creating, training, and validating
 binary and multiclass classifiers using ResNet-10 encoders.
 """
 
-from .heads import (create_binary_classifier_head, create_binary_classifier_with_spatial_embeddings,
-                    create_classifier_head, create_multiclass_classifier_head,
-                    create_multiclass_classifier_with_spatial_embeddings)
+from .heads import (
+    create_binary_classifier_head,
+    create_binary_classifier_with_spatial_embeddings,
+    create_classifier_head,
+    create_multiclass_classifier_head,
+    create_multiclass_classifier_with_spatial_embeddings,
+)
 from .training import train_binary_classifier, train_multiclass_classifier
 from .utils import one_vs_rest
 from .validation import validate_binary_classifier, validate_multiclass_classifier

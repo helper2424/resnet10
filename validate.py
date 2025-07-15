@@ -21,8 +21,13 @@ from torchvision.transforms import ToTensor
 from transformers import AutoModel
 
 # Import classifier components
-from resnet_10.classifiers import (one_vs_rest, train_binary_classifier, train_multiclass_classifier,
-                                   validate_binary_classifier, validate_multiclass_classifier)
+from resnet_10.classifiers import (
+    one_vs_rest,
+    train_binary_classifier,
+    train_multiclass_classifier,
+    validate_binary_classifier,
+    validate_multiclass_classifier,
+)
 
 BATCH_SIZE = 128
 if torch.cuda.is_available():
