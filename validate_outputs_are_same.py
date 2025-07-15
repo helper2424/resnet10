@@ -17,8 +17,8 @@ from transformers import AutoImageProcessor, AutoModel
 
 ModuleDef = Any
 
-jax_hidden_states = {}
-torch_hidden_states = {}
+jax_hidden_states: dict[str, Any] = {}
+torch_hidden_states: dict[str, Any] = {}
 
 
 class AddSpatialCoordinates(nn.Module):
@@ -46,7 +46,7 @@ class SpatialSoftmax(nn.Module):
     channel: int
     pos_x: jnp.ndarray
     pos_y: jnp.ndarray
-    temperature: None
+    temperature: Optional[float]
     log_heatmap: bool = False
 
     @nn.compact
@@ -237,11 +237,7 @@ class ResNetEncoder(nn.Module):
         elif self.norm == "group":
             norm = partial(MyGroupNorm, num_groups=4, epsilon=1e-5, dtype=self.dtype)
         elif self.norm == "layer":
-            norm = partial(
-                nn.LayerNorm,
-                epsilon=1e-5,
-                dtype=self.dtype,
-            )
+            norm = partial(nn.LayerNorm, epsilon=1e-5, dtype=self.dtype)  # type: ignore
         else:
             raise ValueError("norm not found")
 
@@ -319,7 +315,7 @@ class PreTrainedResNetEncoder(nn.Module):
     softmax_temperature: float = 1.0
     num_spatial_blocks: int = 8
     bottleneck_dim: Optional[int] = None
-    pretrained_encoder: nn.module = None
+    pretrained_encoder: Optional[nn.Module] = None
 
     @nn.compact
     def __call__(
@@ -329,7 +325,7 @@ class PreTrainedResNetEncoder(nn.Module):
         train: bool = True,
     ):
         x = observations
-        if encode:
+        if encode and self.pretrained_encoder is not None:
             x = self.pretrained_encoder(x, train=train)
 
         if self.pooling_method == "spatial_learned_embeddings":
@@ -621,7 +617,7 @@ if __name__ == "__main__":
     # Run inference
     outputs = jax_model.apply({"params": new_params}, real_input, train=False)
 
-    print("Model output shape:", outputs.shape)
+    print("Model output shape:", outputs.shape)  # type: ignore
 
     processor = AutoImageProcessor.from_pretrained(args.model_name)
     model = AutoModel.from_pretrained(args.model_name, trust_remote_code=True)

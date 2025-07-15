@@ -205,16 +205,16 @@ class Encoder(nn.Module):
                 )
 
     def forward(self, hidden_state: Tensor, output_hidden_states: bool = False) -> BaseModelOutputWithNoAttention:
-        hidden_states = () if output_hidden_states else None
+        hidden_states: Optional[tuple[Tensor, ...]] = () if output_hidden_states else None
 
         for stage in self.stages:
             if output_hidden_states:
-                hidden_states = hidden_states + (hidden_state,)
+                hidden_states = hidden_states + (hidden_state,)  # type: ignore
 
             hidden_state = stage(hidden_state)
 
         if output_hidden_states:
-            hidden_states = hidden_states + (hidden_state,)
+            hidden_states = hidden_states + (hidden_state,)  # type: ignore
 
         return BaseModelOutputWithPoolingAndNoAttention(
             last_hidden_state=hidden_state,

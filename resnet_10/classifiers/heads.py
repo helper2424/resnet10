@@ -2,7 +2,7 @@
 
 import torch.nn as nn
 
-from resnet_10.modeling_resnet import SpatialLearnedEmbeddings
+from resnet_10.spatial_embeddings import SpatialLearnedEmbeddings
 
 
 def create_classifier_head(
