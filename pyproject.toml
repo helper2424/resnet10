@@ -1,3 +1,11 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["resnet_10*"]
+exclude = ["data*", "weights*", "helper2424*", "resnet10_diffs*"]
+
 [project]
 dependencies = [
     "torch (>=2.5.1,<3.0.0)",

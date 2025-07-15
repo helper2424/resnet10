@@ -13,6 +13,7 @@ def config():
         hidden_sizes=[64, 128, 256, 512],
         hidden_act="relu",
         output_hidden_states=False,
+        pooler="avg",
     )
 
 
@@ -100,3 +101,12 @@ def test_pooler_output(model, input_data):
     """Test if pooler output is correct"""
     output = model(input_data)
     assert output.pooler_output.shape == (input_data.shape[0], 512, 1, 1)
+
+
+def test_without_pooler(config, input_data):
+    """Test if model without pooler output is correct"""
+    config.pooler = None
+    model = ResNet10(config)
+    output = model(input_data)
+    assert output.pooler_output is None
+    assert output.last_hidden_state.shape == (input_data.shape[0], 512, 7, 7)
