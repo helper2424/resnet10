@@ -16,6 +16,7 @@
 import logging
 import os
 import shutil
+import sys
 import tempfile
 from pathlib import Path
 
@@ -39,6 +40,10 @@ from resnet_10.classifiers.utils import one_vs_rest
 from resnet_10.classifiers.validation import validate_binary_classifier, validate_multiclass_classifier
 from resnet_10.configuration_resnet import ResNet10Config
 from resnet_10.modeling_resnet import ResNet10
+
+# Add project root to Python path for root-level modules
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
