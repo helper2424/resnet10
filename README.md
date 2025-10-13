@@ -9,6 +9,27 @@ This project provides tools to convert JAX-based ResNet-10 weights from the [HIL
 - Integration with Hugging Face Hub
 - Type-checked and well-tested codebase
 
+## Model Architecture
+
+ResNet-10 is a lightweight convolutional neural network with the following specifications:
+
+- **Total Parameters:** 4,905,792 (~4.9M parameters)
+- **Architecture:** 4-stage ResNet with basic blocks
+- **Hidden Sizes:** [64, 128, 256, 512]
+- **Input:** 3-channel RGB images
+- **Embedding Size:** 64
+
+### Parameter Distribution
+
+| Component | Parameters |
+|-----------|------------|
+| Embedder (initial conv + norm) | ~9.5K |
+| Encoder Stage 0 | ~74K |
+| Encoder Stage 1 | ~230K |
+| Encoder Stage 2 | ~918K |
+| Encoder Stage 3 | ~3.67M |
+| **Total** | **4.91M** |
+
 ## Usage
 
 The model is available on Hugging Face Hub. You can use it as follows:

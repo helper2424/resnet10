@@ -185,9 +185,12 @@ The original model is from https://github.com/rail-berkeley/hil-serl/blob/7d17d1
 
 - **Original Framework:** JAX
 - **Target Framework:** PyTorch
-- **Model Architecture:** [Specify architecture]
-- **Original Model:** [Link to original model]
-- **Parameters:** [Number of parameters]
+- **Model Architecture:** ResNet-10 (4-stage ResNet with basic blocks)
+- **Original Model:** HIL-SERL ResNet-10
+- **Total Parameters:** 4,905,792 (~4.9M parameters)
+- **Hidden Sizes:** [64, 128, 256, 512]
+- **Input:** 3-channel RGB images (128x128)
+- **Embedding Size:** 64
 
 ## Conversion Process
 
