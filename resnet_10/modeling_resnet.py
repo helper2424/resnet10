@@ -244,6 +244,7 @@ class ResNet10(PreTrainedModel):
 
         self.encoder = Encoder(self.config)
         self._init_pooler()
+        self.post_init()
 
     def _init_pooler(self):
         if self.config.pooler == "avg":
