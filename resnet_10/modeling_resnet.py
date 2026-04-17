@@ -204,7 +204,9 @@ class Encoder(nn.Module):
                     )
                 )
 
-    def forward(self, hidden_state: Tensor, output_hidden_states: bool = False) -> BaseModelOutputWithPoolingAndNoAttention:
+    def forward(
+        self, hidden_state: Tensor, output_hidden_states: bool = False
+    ) -> BaseModelOutputWithPoolingAndNoAttention:
         hidden_states: Optional[tuple[Tensor, ...]] = () if output_hidden_states else None
 
         for stage in self.stages:
@@ -254,7 +256,9 @@ class ResNet10(PreTrainedModel):
         else:
             self.pooler = None
 
-    def forward(self, x: Tensor, output_hidden_states: Optional[bool] = None) -> BaseModelOutputWithPoolingAndNoAttention:
+    def forward(
+        self, x: Tensor, output_hidden_states: Optional[bool] = None
+    ) -> BaseModelOutputWithPoolingAndNoAttention:
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
         )
