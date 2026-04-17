@@ -20,7 +20,7 @@ import torch.nn as nn
 from torch import Tensor
 from transformers import PreTrainedModel
 from transformers.activations import ACT2FN
-from transformers.modeling_outputs import BaseModelOutputWithNoAttention, BaseModelOutputWithPoolingAndNoAttention
+from transformers.modeling_outputs import BaseModelOutputWithPoolingAndNoAttention
 
 from .configuration_resnet import ResNet10Config
 
@@ -204,7 +204,7 @@ class Encoder(nn.Module):
                     )
                 )
 
-    def forward(self, hidden_state: Tensor, output_hidden_states: bool = False) -> BaseModelOutputWithNoAttention:
+    def forward(self, hidden_state: Tensor, output_hidden_states: bool = False) -> BaseModelOutputWithPoolingAndNoAttention:
         hidden_states: Optional[tuple[Tensor, ...]] = () if output_hidden_states else None
 
         for stage in self.stages:
@@ -217,8 +217,8 @@ class Encoder(nn.Module):
             hidden_states = hidden_states + (hidden_state,)  # type: ignore
 
         return BaseModelOutputWithPoolingAndNoAttention(
-            last_hidden_state=hidden_state,
-            hidden_states=hidden_states,
+            last_hidden_state=hidden_state,  # type: ignore[arg-type]
+            hidden_states=hidden_states,  # type: ignore[arg-type]
         )
 
 
@@ -254,7 +254,7 @@ class ResNet10(PreTrainedModel):
         else:
             self.pooler = None
 
-    def forward(self, x: Tensor, output_hidden_states: Optional[bool] = None) -> BaseModelOutputWithNoAttention:
+    def forward(self, x: Tensor, output_hidden_states: Optional[bool] = None) -> BaseModelOutputWithPoolingAndNoAttention:
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
         )
