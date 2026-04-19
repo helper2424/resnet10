@@ -65,7 +65,10 @@ def train_binary_classifier(
 
             # Get features from the encoder
             with torch.no_grad():
-                features = model(data).pooler_output
+                encoder_output = model(data)
+                features = encoder_output.pooler_output
+                if features is None:
+                    features = encoder_output.last_hidden_state
                 features = features.view(features.shape[0], -1)
 
             # Forward pass through classification head
@@ -163,7 +166,10 @@ def train_multiclass_classifier(
 
             # Get features from the encoder
             with torch.no_grad():
-                features = model(data).pooler_output
+                encoder_output = model(data)
+                features = encoder_output.pooler_output
+                if features is None:
+                    features = encoder_output.last_hidden_state
                 features = features.view(features.shape[0], -1)
 
             # Forward pass through classification head
