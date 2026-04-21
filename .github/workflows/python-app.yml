@@ -12,10 +12,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.10
+    - name: Set up Python 3.12
       uses: actions/setup-python@v3
       with:
-        python-version: "3.10"
+        python-version: "3.12"
 
     - name: Install uv
       uses: astral-sh/setup-uv@v3
@@ -42,10 +42,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.10
+    - name: Set up Python 3.12
       uses: actions/setup-python@v3
       with:
-        python-version: "3.10"
+        python-version: "3.12"
 
     - name: Install uv
       uses: astral-sh/setup-uv@v3
@@ -75,10 +75,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.10
+    - name: Set up Python 3.12
       uses: actions/setup-python@v3
       with:
-        python-version: "3.10"
+        python-version: "3.12"
 
     - name: Install uv
       uses: astral-sh/setup-uv@v3
@@ -108,10 +108,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.10
+    - name: Set up Python 3.12
       uses: actions/setup-python@v3
       with:
-        python-version: "3.10"
+        python-version: "3.12"
 
     - name: Install uv
       uses: astral-sh/setup-uv@v3
@@ -141,10 +141,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.10
+    - name: Set up Python 3.12
       uses: actions/setup-python@v3
       with:
-        python-version: "3.10"
+        python-version: "3.12"
 
     - name: Install uv
       uses: astral-sh/setup-uv@v3
@@ -174,10 +174,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.10
+    - name: Set up Python 3.12
       uses: actions/setup-python@v3
       with:
-        python-version: "3.10"
+        python-version: "3.12"
 
     - name: Install uv
       uses: astral-sh/setup-uv@v3

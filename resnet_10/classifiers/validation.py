@@ -31,7 +31,10 @@ def validate_binary_classifier(model, binary_classifier_head, test_loader, devic
             data, labels = data.to(device), labels.to(torch.float32).to(device)
 
             # Get features from encoder
-            features = model(data).pooler_output
+            encoder_output = model(data)
+            features = encoder_output.pooler_output
+            if features is None:
+                features = encoder_output.last_hidden_state
             features = features.view(features.shape[0], -1)
 
             # Forward pass through classification head
@@ -83,7 +86,10 @@ def validate_multiclass_classifier(model, multiclass_classifier_head, test_loade
             data, labels = data.to(device), labels.to(device)
 
             # Get features from encoder
-            features = model(data).pooler_output
+            encoder_output = model(data)
+            features = encoder_output.pooler_output
+            if features is None:
+                features = encoder_output.last_hidden_state
             features = features.view(features.shape[0], -1)
 
             # Forward pass through classification head
